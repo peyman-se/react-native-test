@@ -6,7 +6,7 @@ export default class ListItem extends PureComponent {
     _reformatDate = (dateString) => {
         var date = new Date(dateString),
             diff = (((new Date()).getTime() - date.getTime()) / 1000),
-            day_diff = Math.floor(diff / 86400);
+            day_diff = Math.floor(diff / 86400)
 
         if (isNaN(day_diff) || day_diff < 0 || day_diff >= 31) return;
 
@@ -18,12 +18,13 @@ export default class ListItem extends PureComponent {
             || diff < 86400 && Math.floor(diff / 3600) + " hours ago")
             || day_diff == 1 && "Yesterday"
             || day_diff < 7 && day_diff + " days ago"
-            || day_diff < 31 && Math.ceil(day_diff / 7) + " weeks ago";
+            || day_diff < 31 && Math.ceil(day_diff / 7) + " weeks ago"
+            || day_diff > 31 && "More than a month"
+            || day_diff > 60 && Math.floor
 
     }
     
     render() {
-        // console.log("product is ....", this.props.product)
         return (
             <View style={styles.box}>
                 <View style={styles.faceView}>
@@ -34,28 +35,28 @@ export default class ListItem extends PureComponent {
 
                 <View style={{ flex: 1 }}>
                     <View style={styles.row}>
-                        <Text style={styles.generalText}>
+                        <Text style={styles.columnOne}>
                             Price:
                         </Text>
-                        <Text style={styles.generalText}>
-                            ${this.props.product.price}/100
+                        <Text style={styles.columnTwo}>
+                            ${this.props.product.price/100}
                         </Text>
                     </View>
 
                     <View style={styles.row}>
-                        <Text style={styles.generalText}>
+                        <Text style={styles.columnOne}>
                             Size:
                         </Text>
-                        <Text style={styles.generalText}>
+                        <Text style={styles.columnTwo}>
                             {this.props.product.size}
                         </Text>
                     </View>
 
                     <View style={styles.row}>
-                        <Text style={styles.generalText}>
+                        <Text style={styles.columnOne}>
                             Date:
                         </Text>
-                        <Text style={styles.generalText}>
+                        <Text style={styles.columnTwo}>
                             {this._reformatDate(this.props.product.date)}
                         </Text>
                     </View>
@@ -86,8 +87,13 @@ const styles = StyleSheet.create({
         marginTop:5,
         marginBottom: 5,
     },
-    generalText: {
+    columnOne: {
         flex: 1,
+        color: '#fff',
+        alignItems: 'flex-start'
+    },
+    columnTwo: {
+        flex: 2,
         color: '#fff',
         alignItems: 'flex-start'
     },
