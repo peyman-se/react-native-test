@@ -13,47 +13,82 @@ export default class App extends React.Component {
             extraLoaded: [],
             page_num: 1,
             limit: 20,
-            nextPageData: []
+            nextPageData: [],
+            sort: '',
+            adsRandom: Math.floor(Math.random()*1000)
+        }
+    }
+
+    componentWillUpdate(nextProps, nextState) {
+        console.log("sort", nextState.sort)
+        if(this.state.sort != nextState.sort) {
+            this._loadMoreProducts(true, nextState.sort);
         }
 
-    }
-    componentWillUpdate(nextProps, nextState) {
-        if(this.state.page_num != nextState.page_num) {
+        if(this.state.page_num != nextState.page_num && nextState.page_num != 1 ) {
+            console.log("page number", nextState.page_num)
             this.setState({
                 loading: false,
             })
-            console.log(nextState.page_num)
             this._getNextPageData(nextState.page_num)
         }
+
     }
 
     componentWillMount() {
-        this._loadMoreProducts()
+        this._loadMoreProducts(true)
     }
 
     _getNextPageData = async (page_num) => {
-        let response = await axios.get(`http://192.168.2.12:3000/api/products?_page=${page_num}&_limit=${this.state.limit}`)
+        let url = `http://192.168.2.12:3000/api/products?_page=${page_num}&_limit=${this.state.limit}`
+        if(this.state.sort !== '') {
+            url = url + `&_sort=${this.state.sort}`
+        }
+
+        let products = axios.get(url)
+        let ad = axios.get(`http://192.168.2.12:3000/api/ads?r=${this.state.adsRandom}`)
+        let results = await Promise.all([products, ad])
+
         this.setState({
-            extraLoaded: response.data,
+            extraLoaded: [...results[0].data, ...({'ad': results[1]})],
+            loading: false
         })
     }
 
-    _loadMoreProducts = async () => {
-        if(this.state.page_num === 1) {
+    _loadMoreProducts = async (sortChange = false, sort = '') => {
+        let newRandomAd
+        do {
+            newRandomAd = Math.floor(Math.random() * 1000)
+        } while (this.state.adsRandom == newRandomAd)
+
+        if(sortChange) {
+            let url = `http://192.168.2.12:3000/api/products?_page=${1}&_limit=${this.state.limit}`
+            if(sort !== '') {
+                url = url + `&_sort=${sort}`
+            }
+            let products = axios.get(url)
+            let ad = axios.get(`http://192.168.2.12:3000/api/ads?r=${this.state.adsRandom}`)
+            let results = await Promise.all([products, ad])
+
+            console.log("advertisement is ", results)
+
             this.setState({
-                products: (await axios.get(`http://192.168.2.12:3000/api/products?_page=${this.state.page_num}&_limit=${this.state.limit}`)).data,
-                page_num: this.state.page_num + 1
+                products: [...results[0].data, ...({'ad': results[1]})],
+                page_num: this.state.page_num + 1,
+                adsRandom: newRandomAd
             })
+
         } else {
             this.setState({
                 products: [...this.state.products, ...this.state.extraLoaded],
-                page_num: this.state.page_num + 1
+                page_num: this.state.page_num + 1,
+                adsRandom: newRandomAd,
+                loading: true
             })
         }
     }
   
     render() {
-      // console.log(this.state.products)
 
     return (
         <View style={styles.container}>
@@ -61,22 +96,37 @@ export default class App extends React.Component {
                 <Text style={{color: 'white'}}>Filter by</Text>
                 <View style={styles.row}>
                     <Button
-                        onPress={() => console.log("size")}
+                        onPress={() => (
+                            this.setState({
+                                sort: 'size',
+                                page_num: 1
+                            })
+                        )}
                         title="Size"
                         accessibilityLabel="Filter by size"
                         style={styles.button}
                     />
 
                     <Button
-                        onPress={() => console.log("date")}
-                        title="date"
+                        onPress={() => (
+                            this.setState({
+                                sort: 'date',
+                                page_num: 1
+                            })
+                        )}
+                        title="Date"
                         accessibilityLabel="Filter by size"
                         style={styles.button}
                     />
 
                     <Button
-                        onPress={() => console.log("price")}
-                        title="price"
+                        onPress={() => (
+                            this.setState({
+                                sort: 'price',
+                                page_num: 1
+                            })
+                        )}
+                        title="Price"
                         accessibilityLabel="Filter by size"
                         style={styles.button}
                     />
@@ -87,7 +137,7 @@ export default class App extends React.Component {
                 data={this.state.products}
                 keyExtractor={this._keyExtractor}
                 renderItem={({item}) => <ListItem product={item} />}
-                numColumns={2}
+                numColumns={1}
                 shouldItemUpdate={false}
                 onEndReachedThreshold={0}
                 onEndReached={({ distanceFromEnd }) => {
